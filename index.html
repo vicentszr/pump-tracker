@@ -32,8 +32,6 @@
     .search-btn{padding:12px 22px;background:var(--cyan);color:var(--bg);border:none;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;font-weight:700;cursor:pointer;transition:background 0.2s;white-space:nowrap;}
     .search-btn:hover{background:#fff;}
     .search-btn:disabled{background:var(--muted);cursor:not-allowed;}
-    .helius-note{font-size:0.6rem;color:var(--muted);margin-bottom:6px;}
-    .helius-note a{color:var(--cyan);}
     .examples{font-size:0.62rem;color:var(--muted);margin-bottom:36px;}
     .examples span{color:var(--cyan);cursor:pointer;text-decoration:underline;}
     .loading{display:none;text-align:center;padding:60px;font-size:0.75rem;color:var(--muted);letter-spacing:0.1em;}
@@ -126,12 +124,8 @@
     <div class="input-wrap" style="flex:1;">
       <input type="text" class="search-input" id="caInput" placeholder="Paste Pump.fun token CA..." autocomplete="off" spellcheck="false"/>
     </div>
-    <div class="input-wrap helius-wrap">
-      <input type="text" class="search-input" id="heliusKey" placeholder="Helius API key (for whales)" autocomplete="off"/>
-    </div>
     <button class="search-btn" id="searchBtn" onclick="trackToken()">TRACK →</button>
   </div>
-  <div class="helius-note">🔑 Get a free Helius key at <a href="https://helius.dev" target="_blank">helius.dev</a> to enable real whale tracking · without key, whale data is estimated</div>
   <div class="examples">Try: <span onclick="loadEx('EJtmWDfjsxpadbGtqDdD1zvP6tjSa6QzY18EASS3pump')">$LB (Liquid Bank)</span></div>
 
   <div class="loading" id="loading"><span class="spinner"></span>FETCHING DATA...</div>
@@ -213,7 +207,6 @@
         <div class="whale-table-hdr">
           <span></span><span>Wallet</span><span style="text-align:right">Type</span><span style="text-align:right">SOL Vol</span><span style="text-align:right">Txns</span><span>Activity</span>
         </div>
-        <div id="whaleList"><div class="whale-msg">Enter a Helius API key above for real whale data</div></div>
       </div>
     </div>
   </div>
@@ -274,11 +267,10 @@
 
   async function loadWhales() {
     if (!currentCA) return;
-    const heliusKey = document.getElementById('heliusKey').value.trim();
+    const heliusKey = 'b96b2091-a2dd-4a2f-985d-6e5593f1a3a3';
     const list = document.getElementById('whaleList');
 
     if (!heliusKey) {
-      list.innerHTML = '<div class="whale-msg">🔑 Enter your <a href="https://helius.dev" target="_blank" style="color:var(--cyan)">Helius API key</a> above to see real whale wallets</div>';
       return;
     }
 
@@ -296,7 +288,7 @@
           jsonrpc: '2.0',
           id: 1,
           method: 'getSignaturesForAddress',
-          params: [currentCA, { limit: 100 }]
+          params: [currentPair?.pairAddress || currentCA, { limit: 100 }]
         })
       });
       const sigData = await sigRes.json();
@@ -497,3 +489,4 @@
 </script>
 </body>
 </html>
+<!-- patch -->
