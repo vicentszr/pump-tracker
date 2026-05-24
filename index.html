@@ -8,100 +8,110 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #020608; --bg2: #060d10; --surface: #0a1518;
-      --border: #0f2a30; --green: #00ff88; --red: #ff3366;
-      --cyan: #00d4ff; --yellow: #ffcc00; --muted: #3a5560; --text: #d0eef5;
+      --bg:#020608;--bg2:#060d10;--surface:#0a1518;
+      --border:#0f2a30;--green:#00ff88;--red:#ff3366;
+      --cyan:#00d4ff;--yellow:#ffcc00;--muted:#3a5560;--text:#d0eef5;
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:var(--bg); color:var(--text); font-family:'IBM Plex Mono',monospace; min-height:100vh; }
-    body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,0.012) 2px,rgba(0,212,255,0.012) 4px); pointer-events:none; z-index:0; }
-    header { position:relative; z-index:10; padding:20px 32px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:rgba(2,6,8,0.95); }
-    .logo { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:var(--cyan); }
-    .logo span { color:var(--green); }
-    .live { display:flex; align-items:center; gap:6px; font-size:0.65rem; color:var(--muted); letter-spacing:0.1em; }
-    .dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    main { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:40px 24px; }
-    .search-label { font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; display:block; }
-    .search-box { display:flex; border:1px solid var(--border); background:var(--bg2); margin-bottom:8px; transition:border-color 0.2s; }
-    .search-box:focus-within { border-color:var(--cyan); box-shadow:0 0 20px rgba(0,212,255,0.08); }
-    .search-input { flex:1; background:none; border:none; padding:14px 18px; color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:0.82rem; outline:none; }
-    .search-input::placeholder { color:var(--muted); }
-    .search-btn { padding:14px 24px; background:var(--cyan); color:var(--bg); border:none; font-family:'IBM Plex Mono',monospace; font-size:0.75rem; font-weight:700; cursor:pointer; transition:background 0.2s; }
-    .search-btn:hover { background:#fff; }
-    .search-btn:disabled { background:var(--muted); cursor:not-allowed; }
-    .examples { font-size:0.62rem; color:var(--muted); margin-bottom:40px; }
-    .examples span { color:var(--cyan); cursor:pointer; text-decoration:underline; }
-    .loading { display:none; text-align:center; padding:60px; font-size:0.75rem; color:var(--muted); letter-spacing:0.1em; }
-    .loading.visible { display:block; }
-    .spinner { display:inline-block; width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--cyan); border-radius:50%; animation:spin 0.8s linear infinite; margin-right:8px; vertical-align:middle; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .error { display:none; padding:14px 18px; border:1px solid var(--red); background:rgba(255,51,102,0.05); color:var(--red); font-size:0.75rem; margin-bottom:20px; }
-    .error.visible { display:block; }
-    #results { display:none; }
-    #results.visible { display:block; }
-    .ca-bar { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--surface); border:1px solid var(--border); margin-bottom:24px; }
-    .ca-tag { font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
-    .ca-val { flex:1; font-size:0.7rem; color:var(--cyan); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .mini-btn { padding:3px 10px; background:none; border:1px solid var(--border); color:var(--muted); font-family:'IBM Plex Mono',monospace; font-size:0.6rem; cursor:pointer; transition:all 0.2s; text-decoration:none; display:inline-block; }
-    .mini-btn:hover { border-color:var(--cyan); color:var(--cyan); }
-    .token-hdr { display:flex; align-items:flex-start; gap:20px; padding:20px; border:1px solid var(--border); background:var(--bg2); margin-bottom:20px; }
-    .tok-img { width:60px; height:60px; object-fit:cover; border:1px solid var(--border); background:var(--surface); flex-shrink:0; font-size:1.5rem; display:flex; align-items:center; justify-content:center; }
-    .tok-info { flex:1; }
-    .tok-name { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; line-height:1; margin-bottom:3px; }
-    .tok-ticker { font-size:0.75rem; color:var(--cyan); margin-bottom:8px; }
-    .tok-desc { font-size:0.68rem; color:var(--muted); line-height:1.6; max-width:480px; }
-    .tok-links { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
-    .tok-status { flex-shrink:0; text-align:right; }
-    .badge { display:inline-block; padding:3px 10px; font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; font-weight:700; }
-    .badge-bonding { background:rgba(255,204,0,0.1); color:var(--yellow); border:1px solid var(--yellow); }
-    .badge-graduated { background:rgba(0,255,136,0.1); color:var(--green); border:1px solid var(--green); }
-    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:20px; }
-    .stat { background:var(--bg2); padding:18px 20px; position:relative; overflow:hidden; }
-    .stat::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--cyan); transform:scaleX(0); transform-origin:left; transition:transform 0.6s ease; }
-    .stat.on::after { transform:scaleX(1); }
-    .stat-lbl { font-size:0.58rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
-    .stat-val { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; }
-    .stat-sub { font-size:0.62rem; color:var(--muted); margin-top:3px; }
-    .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px; }
-    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
-    .panel { border:1px solid var(--border); background:var(--bg2); }
-    .panel-hdr { padding:12px 18px; border-bottom:1px solid var(--border); font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--cyan); display:flex; justify-content:space-between; align-items:center; }
-    .panel-body { padding:18px; }
-    .bc-meta { display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.68rem; }
-    .prog-bg { height:5px; background:var(--border); margin-bottom:6px; }
-    .prog-fill { height:100%; background:linear-gradient(90deg,var(--cyan),var(--green)); transition:width 1s ease; }
-    .prog-lbls { display:flex; justify-content:space-between; font-size:0.58rem; color:var(--muted); margin-bottom:16px; }
-    .irow { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.72rem; }
-    .irow:last-child { border-bottom:none; }
-    .ikey { color:var(--muted); }
-    .ival { color:var(--text); text-align:right; }
-    .ival.g { color:var(--green); }
-    .ival.r { color:var(--red); }
-    .ival.c { color:var(--cyan); }
-    .ival.y { color:var(--yellow); }
-
-    /* WHALE TRACKER */
-    .whale-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); font-size:0.7rem; }
-    .whale-row:last-child { border-bottom:none; }
-    .whale-icon { font-size:1rem; width:24px; text-align:center; flex-shrink:0; }
-    .whale-addr { flex:1; color:var(--cyan); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
-    .whale-addr:hover { text-decoration:underline; }
-    .whale-type { padding:2px 8px; font-size:0.58rem; font-weight:700; letter-spacing:0.08em; }
-    .whale-buy { background:rgba(0,255,136,0.1); color:var(--green); border:1px solid rgba(0,255,136,0.3); }
-    .whale-sell { background:rgba(255,51,102,0.1); color:var(--red); border:1px solid rgba(255,51,102,0.3); }
-    .whale-both { background:rgba(0,212,255,0.1); color:var(--cyan); border:1px solid rgba(0,212,255,0.3); }
-    .whale-amount { color:var(--text); min-width:70px; text-align:right; font-weight:700; }
-    .whale-vol { color:var(--muted); min-width:60px; text-align:right; font-size:0.65rem; }
-    .whale-bar-bg { width:50px; height:3px; background:var(--border); }
-    .whale-bar-fill { height:100%; background:var(--cyan); }
-    .whale-loading { text-align:center; padding:20px; color:var(--muted); font-size:0.7rem; }
-
-    footer { position:relative; z-index:1; border-top:1px solid var(--border); padding:16px 32px; display:flex; justify-content:space-between; font-size:0.6rem; color:var(--muted); letter-spacing:0.06em; }
-    @media(max-width:768px) {
-      .stats-grid { grid-template-columns:repeat(2,1fr); }
-      .two-col,.three-col { grid-template-columns:1fr; }
-      .token-hdr { flex-direction:column; }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;min-height:100vh;}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,0.012) 2px,rgba(0,212,255,0.012) 4px);pointer-events:none;z-index:0;}
+    header{position:relative;z-index:10;padding:20px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(2,6,8,0.95);}
+    .logo{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--cyan);}
+    .logo span{color:var(--green);}
+    .live{display:flex;align-items:center;gap:6px;font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+    main{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:40px 24px;}
+    .row{display:flex;gap:12px;margin-bottom:8px;}
+    .search-label{font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:block;}
+    .input-wrap{flex:1;display:flex;border:1px solid var(--border);background:var(--bg2);transition:border-color 0.2s;}
+    .input-wrap:focus-within{border-color:var(--cyan);}
+    .input-wrap.helius-wrap{flex:0 0 340px;}
+    .search-input{flex:1;background:none;border:none;padding:12px 16px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.8rem;outline:none;}
+    .search-input::placeholder{color:var(--muted);}
+    .search-btn{padding:12px 22px;background:var(--cyan);color:var(--bg);border:none;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;font-weight:700;cursor:pointer;transition:background 0.2s;white-space:nowrap;}
+    .search-btn:hover{background:#fff;}
+    .search-btn:disabled{background:var(--muted);cursor:not-allowed;}
+    .helius-note{font-size:0.6rem;color:var(--muted);margin-bottom:6px;}
+    .helius-note a{color:var(--cyan);}
+    .examples{font-size:0.62rem;color:var(--muted);margin-bottom:36px;}
+    .examples span{color:var(--cyan);cursor:pointer;text-decoration:underline;}
+    .loading{display:none;text-align:center;padding:60px;font-size:0.75rem;color:var(--muted);letter-spacing:0.1em;}
+    .loading.visible{display:block;}
+    .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px;vertical-align:middle;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .error{display:none;padding:14px 18px;border:1px solid var(--red);background:rgba(255,51,102,0.05);color:var(--red);font-size:0.75rem;margin-bottom:20px;}
+    .error.visible{display:block;}
+    #results{display:none;}
+    #results.visible{display:block;}
+    .ca-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:24px;}
+    .ca-tag{font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+    .ca-val{flex:1;font-size:0.7rem;color:var(--cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .mini-btn{padding:3px 10px;background:none;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block;}
+    .mini-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+    .token-hdr{display:flex;align-items:flex-start;gap:20px;padding:20px;border:1px solid var(--border);background:var(--bg2);margin-bottom:20px;}
+    .tok-img-wrap{width:60px;height:60px;border:1px solid var(--border);background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.8rem;}
+    .tok-img-wrap img{width:100%;height:100%;object-fit:cover;}
+    .tok-info{flex:1;}
+    .tok-name{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;line-height:1;margin-bottom:3px;}
+    .tok-ticker{font-size:0.75rem;color:var(--cyan);margin-bottom:8px;}
+    .tok-desc{font-size:0.68rem;color:var(--muted);line-height:1.6;max-width:480px;}
+    .tok-links{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+    .tok-status{flex-shrink:0;text-align:right;}
+    .badge{display:inline-block;padding:3px 10px;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:700;}
+    .badge-bonding{background:rgba(255,204,0,0.1);color:var(--yellow);border:1px solid var(--yellow);}
+    .badge-graduated{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid var(--green);}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:20px;}
+    .stat{background:var(--bg2);padding:18px 20px;position:relative;overflow:hidden;}
+    .stat::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cyan);transform:scaleX(0);transform-origin:left;transition:transform 0.6s ease;}
+    .stat.on::after{transform:scaleX(1);}
+    .stat-lbl{font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+    .stat-val{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;}
+    .stat-sub{font-size:0.62rem;color:var(--muted);margin-top:3px;}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+    .panel{border:1px solid var(--border);background:var(--bg2);}
+    .panel-hdr{padding:12px 18px;border-bottom:1px solid var(--border);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--cyan);display:flex;justify-content:space-between;align-items:center;}
+    .panel-body{padding:18px;}
+    .bc-meta{display:flex;justify-content:space-between;margin-bottom:8px;font-size:0.68rem;}
+    .prog-bg{height:5px;background:var(--border);margin-bottom:6px;}
+    .prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width 1s ease;}
+    .prog-lbls{display:flex;justify-content:space-between;font-size:0.58rem;color:var(--muted);margin-bottom:16px;}
+    .irow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.72rem;}
+    .irow:last-child{border-bottom:none;}
+    .ikey{color:var(--muted);}
+    .ival{color:var(--text);text-align:right;}
+    .ival.g{color:var(--green);}
+    .ival.r{color:var(--red);}
+    .ival.c{color:var(--cyan);}
+    .ival.y{color:var(--yellow);}
+    /* Whale */
+    .whale-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:16px;}
+    .whale-stat{background:var(--surface);padding:12px 16px;}
+    .whale-stat-lbl{font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
+    .whale-stat-val{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;}
+    .whale-table-hdr{display:grid;grid-template-columns:28px 1fr 80px 80px 60px 50px;gap:8px;align-items:center;font-size:0.58rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;padding:6px 0 8px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+    .whale-row{display:grid;grid-template-columns:28px 1fr 80px 80px 60px 50px;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:0.7rem;}
+    .whale-row:last-child{border-bottom:none;}
+    .whale-icon{text-align:center;font-size:1rem;}
+    .whale-addr{color:var(--cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;}
+    .whale-addr:hover{text-decoration:underline;}
+    .whale-type{padding:2px 6px;font-size:0.56rem;font-weight:700;letter-spacing:0.06em;text-align:center;}
+    .wt-buy{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.3);}
+    .wt-sell{background:rgba(255,51,102,0.1);color:var(--red);border:1px solid rgba(255,51,102,0.3);}
+    .wt-both{background:rgba(0,212,255,0.1);color:var(--cyan);border:1px solid rgba(0,212,255,0.3);}
+    .whale-sol{color:var(--text);text-align:right;font-weight:700;}
+    .whale-txns{color:var(--muted);text-align:right;}
+    .wbar-bg{height:3px;background:var(--border);}
+    .wbar-fill{height:100%;}
+    .whale-msg{text-align:center;padding:24px;color:var(--muted);font-size:0.7rem;}
+    footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:16px 32px;display:flex;justify-content:space-between;font-size:0.6rem;color:var(--muted);letter-spacing:0.06em;}
+    @media(max-width:768px){
+      .stats-grid{grid-template-columns:repeat(2,1fr);}
+      .two-col{grid-template-columns:1fr;}
+      .token-hdr{flex-direction:column;}
+      .row{flex-direction:column;}
+      .input-wrap.helius-wrap{flex:1;}
+      .whale-table-hdr,.whale-row{grid-template-columns:28px 1fr 70px 60px;}
     }
   </style>
 </head>
@@ -111,11 +121,17 @@
   <div class="live"><div class="dot"></div>LIVE · SOLANA</div>
 </header>
 <main>
-  <span class="search-label">// Pump.fun Token Contract Address</span>
-  <div class="search-box">
-    <input type="text" class="search-input" id="caInput" placeholder="Paste any Pump.fun token CA..." autocomplete="off" spellcheck="false"/>
+  <span class="search-label">// Token Contract Address + Helius API Key</span>
+  <div class="row">
+    <div class="input-wrap" style="flex:1;">
+      <input type="text" class="search-input" id="caInput" placeholder="Paste Pump.fun token CA..." autocomplete="off" spellcheck="false"/>
+    </div>
+    <div class="input-wrap helius-wrap">
+      <input type="text" class="search-input" id="heliusKey" placeholder="Helius API key (for whales)" autocomplete="off"/>
+    </div>
     <button class="search-btn" id="searchBtn" onclick="trackToken()">TRACK →</button>
   </div>
+  <div class="helius-note">🔑 Get a free Helius key at <a href="https://helius.dev" target="_blank">helius.dev</a> to enable real whale tracking · without key, whale data is estimated</div>
   <div class="examples">Try: <span onclick="loadEx('EJtmWDfjsxpadbGtqDdD1zvP6tjSa6QzY18EASS3pump')">$LB (Liquid Bank)</span></div>
 
   <div class="loading" id="loading"><span class="spinner"></span>FETCHING DATA...</div>
@@ -125,16 +141,16 @@
     <div class="ca-bar">
       <span class="ca-tag">CA</span>
       <span class="ca-val" id="caDisp">—</span>
-      <button class="mini-btn" onclick="copyCA()">COPY</button>
+      <button class="mini-btn" onclick="copyCA(event)">COPY</button>
       <a id="lkSolscan" href="#" target="_blank" class="mini-btn">SOLSCAN ↗</a>
       <a id="lkDex" href="#" target="_blank" class="mini-btn">DEXSCREENER ↗</a>
       <a id="lkPump" href="#" target="_blank" class="mini-btn">PUMP.FUN ↗</a>
     </div>
 
     <div class="token-hdr">
-      <div class="tok-img" id="tokImgWrap">
-        <img id="tokImg" src="" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';document.getElementById('tokEmoji').style.display='block'"/>
-        <span id="tokEmoji" style="display:none">💧</span>
+      <div class="tok-img-wrap" id="tokImgWrap">
+        <img id="tokImg" src="" alt="" onerror="this.style.display='none'"/>
+        <span id="tokEmoji"></span>
       </div>
       <div class="tok-info">
         <div class="tok-name" id="tokName">—</div>
@@ -185,36 +201,26 @@
     <!-- WHALE TRACKER -->
     <div class="panel" style="margin-bottom:20px;">
       <div class="panel-hdr">
-        <span>🐳 Whale Tracker — Top Traders</span>
+        <span>🐳 Whale Tracker — Real On-Chain Data</span>
         <button class="mini-btn" onclick="loadWhales()">↻ REFRESH</button>
       </div>
       <div class="panel-body">
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:16px;">
-          <div style="background:var(--surface);padding:12px 16px;">
-            <div style="font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Total Whales</div>
-            <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--cyan);" id="whaleCount">—</div>
-          </div>
-          <div style="background:var(--surface);padding:12px 16px;">
-            <div style="font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Buy Pressure</div>
-            <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--green);" id="whaleBuyPct">—</div>
-          </div>
-          <div style="background:var(--surface);padding:12px 16px;">
-            <div style="font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Top Whale Vol</div>
-            <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--yellow);" id="whaleTopVol">—</div>
-          </div>
+        <div class="whale-stats">
+          <div class="whale-stat"><div class="whale-stat-lbl">Unique Traders</div><div class="whale-stat-val c" id="wUnique">—</div></div>
+          <div class="whale-stat"><div class="whale-stat-lbl">Buy Pressure</div><div class="whale-stat-val g" id="wBuyPct">—</div></div>
+          <div class="whale-stat"><div class="whale-stat-lbl">Top Whale Vol</div><div class="whale-stat-val y" id="wTopVol">—</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:8px 12px;align-items:center;font-size:0.6rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;padding:0 0 8px;border-bottom:1px solid var(--border);margin-bottom:4px;">
-          <span></span><span>Wallet</span><span>Type</span><span style="text-align:right">Volume</span><span style="text-align:right">Txns</span><span style="text-align:right">Activity</span>
+        <div class="whale-table-hdr">
+          <span></span><span>Wallet</span><span style="text-align:right">Type</span><span style="text-align:right">SOL Vol</span><span style="text-align:right">Txns</span><span>Activity</span>
         </div>
-        <div id="whaleList"><div class="whale-loading">Loading whale data...</div></div>
+        <div id="whaleList"><div class="whale-msg">Enter a Helius API key above for real whale data</div></div>
       </div>
     </div>
-
   </div>
 </main>
 <footer>
-  <div>PUMPTRACKER — Solana Token Scanner</div>
-  <div>Data: DexScreener · Solscan</div>
+  <div>PUMPTRACKER — Pump.fun Token Scanner</div>
+  <div>Data: DexScreener · Helius</div>
 </footer>
 
 <script>
@@ -239,6 +245,13 @@
     return '$' + n.toFixed(2);
   }
 
+  function fmtSol(lamports) {
+    const sol = lamports / 1e9;
+    if (sol >= 1000) return sol.toFixed(0) + ' SOL';
+    if (sol >= 1) return sol.toFixed(2) + ' SOL';
+    return sol.toFixed(4) + ' SOL';
+  }
+
   function fmtPrice(p) {
     if (!p) return '$0';
     if (p < 0.000001) return '$' + p.toExponential(3);
@@ -253,122 +266,135 @@
     return `<span class="ival ${cls}">${v >= 0 ? '+' : ''}${v.toFixed(2)}%</span>`;
   }
 
-  function copyCA() {
+  function copyCA(e) {
     navigator.clipboard.writeText(currentCA);
-    event.target.textContent = 'COPIED!';
-    setTimeout(() => event.target.textContent = 'COPY', 1500);
+    e.target.textContent = 'COPIED!';
+    setTimeout(() => e.target.textContent = 'COPY', 1500);
   }
 
   async function loadWhales() {
     if (!currentCA) return;
+    const heliusKey = document.getElementById('heliusKey').value.trim();
     const list = document.getElementById('whaleList');
-    list.innerHTML = '<div class="whale-loading"><span class="spinner"></span> Loading whale data...</div>';
+
+    if (!heliusKey) {
+      list.innerHTML = '<div class="whale-msg">🔑 Enter your <a href="https://helius.dev" target="_blank" style="color:var(--cyan)">Helius API key</a> above to see real whale wallets</div>';
+      return;
+    }
+
+    list.innerHTML = `<div class="whale-msg"><span class="spinner"></span> Fetching on-chain transactions...</div>`;
 
     try {
-      // Use Solscan public API for top traders
-      const res = await fetch(`https://api.solscan.io/v2/token/transfer?address=${currentCA}&page=1&page_size=40&sort_by=block_time&sort_order=desc`, {
-        headers: { 'accept': 'application/json' }
-      });
-      const data = await res.json();
+      // Get recent signatures for this token via Helius
+      const rpcUrl = `https://mainnet.helius-rpc.com/?api-key=${heliusKey}`;
 
-      if (!data?.data?.items?.length) {
-        // Fallback: use DexScreener trade data we already have
-        renderWhalesFromDex();
+      // Get recent transactions for the token mint
+      const sigRes = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getSignaturesForAddress',
+          params: [currentCA, { limit: 100 }]
+        })
+      });
+      const sigData = await sigRes.json();
+      const sigs = sigData?.result || [];
+
+      if (!sigs.length) {
+        list.innerHTML = '<div class="whale-msg">No recent transactions found for this token</div>';
         return;
       }
 
-      // Aggregate by wallet
+      // Parse transactions to find traders
       const wallets = {};
-      data.data.items.forEach(tx => {
-        const isBuy = tx.dst_token_account === currentCA || tx.flow === 'in';
-        const addr = tx.src_owner || tx.dst_owner;
-        if (!addr || addr === currentCA) return;
-        if (!wallets[addr]) wallets[addr] = { addr, buys: 0, sells: 0, vol: 0, txns: 0 };
-        wallets[addr].txns++;
-        wallets[addr].vol += parseFloat(tx.amount || 0);
-        if (isBuy) wallets[addr].buys++;
-        else wallets[addr].sells++;
+      
+      // Use Helius enhanced transactions API
+      const txSigs = sigs.slice(0, 50).map(s => s.signature);
+      
+      const txRes = await fetch(`https://api.helius.xyz/v0/transactions?api-key=${heliusKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactions: txSigs })
+      });
+      const txData = await txRes.json();
+
+      if (!Array.isArray(txData)) throw new Error('Invalid response from Helius');
+
+      txData.forEach(tx => {
+        if (!tx || tx.transactionError) return;
+        const feePayer = tx.feePayer;
+        if (!feePayer) return;
+
+        // Check token transfers
+        const transfers = tx.tokenTransfers || [];
+        transfers.forEach(t => {
+          if (t.mint !== currentCA) return;
+          const isBuy = t.toUserAccount === feePayer;
+          const isSell = t.fromUserAccount === feePayer;
+          if (!isBuy && !isSell) return;
+
+          if (!wallets[feePayer]) wallets[feePayer] = { addr: feePayer, buys: 0, sells: 0, solVol: 0, txns: 0 };
+          wallets[feePayer].txns++;
+
+          // Get SOL amount from native transfers
+          const nativeTransfers = tx.nativeTransfers || [];
+          const solAmount = nativeTransfers.reduce((sum, nt) => {
+            if (isBuy && nt.fromUserAccount === feePayer) return sum + (nt.amount || 0);
+            if (isSell && nt.toUserAccount === feePayer) return sum + (nt.amount || 0);
+            return sum;
+          }, 0);
+
+          wallets[feePayer].solVol += solAmount;
+          if (isBuy) wallets[feePayer].buys++;
+          else wallets[feePayer].sells++;
+        });
       });
 
-      renderWhales(Object.values(wallets));
-    } catch(e) {
-      renderWhalesFromDex();
-    }
-  }
+      const traders = Object.values(wallets).filter(w => w.txns > 0);
 
-  function renderWhalesFromDex() {
-    // Generate whale data from DexScreener buys/sells ratio
-    if (!currentPair) {
-      document.getElementById('whaleList').innerHTML = '<div class="whale-loading" style="color:var(--muted)">No trade data available yet</div>';
-      return;
-    }
-    const buys = currentPair.txns?.h24?.buys || 0;
-    const sells = currentPair.txns?.h24?.sells || 0;
-    const vol = parseFloat(currentPair.volume?.h24 || 0);
+      if (!traders.length) {
+        list.innerHTML = '<div class="whale-msg">No swap transactions found. Token may have low activity.</div>';
+        return;
+      }
 
-    // Simulate top traders based on volume distribution
-    const traders = [];
-    const avgBuyVol = buys > 0 ? vol * 0.6 / buys : 0;
-    const avgSellVol = sells > 0 ? vol * 0.4 / sells : 0;
+      // Sort by SOL volume
+      traders.sort((a,b) => b.solVol - a.solVol);
+      const top = traders.slice(0, 10);
+      const maxVol = top[0]?.solVol || 1;
 
-    // Show top 8 simulated whales
-    for (let i = 0; i < Math.min(8, buys + sells); i++) {
-      const isBuy = i < Math.ceil(buys / (buys + sells) * 8);
-      traders.push({
-        addr: 'Trader #' + (i + 1),
-        buys: isBuy ? Math.ceil(Math.random() * 3) : 0,
-        sells: !isBuy ? Math.ceil(Math.random() * 3) : 0,
-        vol: isBuy ? avgBuyVol * (1 + Math.random()) : avgSellVol * (1 + Math.random()),
-        txns: Math.ceil(Math.random() * 5) + 1,
-        simulated: true
+      // Stats
+      const buyers = top.filter(w => w.buys >= w.sells).length;
+      const buyPct = Math.round((buyers / top.length) * 100);
+      document.getElementById('wUnique').textContent = traders.length;
+      document.getElementById('wBuyPct').textContent = buyPct + '% buying';
+      document.getElementById('wTopVol').textContent = fmtSol(maxVol);
+
+      let html = '';
+      top.forEach((w, i) => {
+        const type = w.buys > w.sells ? 'buy' : w.sells > w.buys ? 'sell' : 'both';
+        const typeLabel = type === 'buy' ? 'BUYER' : type === 'sell' ? 'SELLER' : 'TRADER';
+        const barW = Math.round((w.solVol / maxVol) * 100);
+        const barColor = type === 'buy' ? 'var(--green)' : type === 'sell' ? 'var(--red)' : 'var(--cyan)';
+        const emoji = i === 0 ? '🐋' : i < 3 ? '🦈' : '🐟';
+
+        html += `
+          <div class="whale-row">
+            <span class="whale-icon">${emoji}</span>
+            <a href="https://solscan.io/account/${w.addr}" target="_blank" class="whale-addr" title="${w.addr}">${shortAddr(w.addr)}</a>
+            <span class="whale-type wt-${type}" style="text-align:center">${typeLabel}</span>
+            <span class="whale-sol" style="text-align:right">${fmtSol(w.solVol)}</span>
+            <span class="whale-txns" style="text-align:right">${w.txns}</span>
+            <div class="wbar-bg"><div class="wbar-fill" style="width:${barW}%;background:${barColor}"></div></div>
+          </div>`;
       });
+
+      list.innerHTML = html;
+
+    } catch(err) {
+      list.innerHTML = `<div class="whale-msg" style="color:var(--red)">❌ Error: ${err.message}</div>`;
     }
-    renderWhales(traders);
-  }
-
-  function renderWhales(wallets) {
-    // Sort by volume
-    wallets.sort((a,b) => b.vol - a.vol);
-    const top = wallets.slice(0, 10);
-    const maxVol = top[0]?.vol || 1;
-
-    // Stats
-    const buyers = top.filter(w => w.buys >= w.sells).length;
-    const buyPct = top.length > 0 ? Math.round((buyers / top.length) * 100) : 0;
-    document.getElementById('whaleCount').textContent = top.length;
-    document.getElementById('whaleBuyPct').textContent = buyPct + '% buying';
-    document.getElementById('whaleTopVol').textContent = fmt(maxVol);
-
-    if (top.length === 0) {
-      document.getElementById('whaleList').innerHTML = '<div class="whale-loading" style="color:var(--muted)">No whale data available</div>';
-      return;
-    }
-
-    let html = '';
-    top.forEach((w, i) => {
-      const type = w.buys > w.sells ? 'buy' : w.sells > w.buys ? 'sell' : 'both';
-      const typeLabel = type === 'buy' ? 'BUYER' : type === 'sell' ? 'SELLER' : 'TRADER';
-      const barW = Math.round((w.vol / maxVol) * 100);
-      const emoji = i === 0 ? '🐋' : i < 3 ? '🦈' : '🐟';
-      const addrDisplay = w.simulated ? w.addr : shortAddr(w.addr);
-      const solscanUrl = w.simulated ? '#' : `https://solscan.io/account/${w.addr}`;
-
-      html += `
-        <div class="whale-row">
-          <span class="whale-icon">${emoji}</span>
-          <a href="${solscanUrl}" target="_blank" class="whale-addr" title="${w.addr}">${addrDisplay}</a>
-          <span class="whale-type whale-${type}">${typeLabel}</span>
-          <span class="whale-amount">${fmt(w.vol)}</span>
-          <span class="whale-vol">${w.txns} txns</span>
-          <div class="whale-bar-bg"><div class="whale-bar-fill" style="width:${barW}%"></div></div>
-        </div>`;
-    });
-
-    if (top[0]?.simulated) {
-      html += `<div style="font-size:0.6rem;color:var(--muted);padding-top:12px;border-top:1px solid var(--border);margin-top:8px;">⚠ Estimated from 24h volume data. Connect wallet for real-time whale tracking.</div>`;
-    }
-
-    document.getElementById('whaleList').innerHTML = html;
   }
 
   async function trackToken() {
@@ -387,44 +413,35 @@
       const pair = data?.pairs?.[0];
 
       if (!pair) throw new Error('Token not found. Make sure it has been traded on Pump.fun.');
-
       currentPair = pair;
 
-      // CA bar
       document.getElementById('caDisp').textContent = ca;
       document.getElementById('lkSolscan').href = `https://solscan.io/token/${ca}`;
       document.getElementById('lkDex').href = `https://dexscreener.com/solana/${ca}`;
       document.getElementById('lkPump').href = `https://pump.fun/coin/${ca}`;
 
-      // Token header
       const info = pair.info || {};
       const imgUrl = info.imageUrl || '';
-      document.getElementById('tokImg').src = imgUrl;
-      document.getElementById('tokEmoji').textContent = (pair.baseToken?.symbol || '?')[0];
+      const imgEl = document.getElementById('tokImg');
+      const emojiEl = document.getElementById('tokEmoji');
+      if (imgUrl) { imgEl.src = imgUrl; imgEl.style.display = 'block'; emojiEl.style.display = 'none'; }
+      else { imgEl.style.display = 'none'; emojiEl.style.display = 'block'; emojiEl.textContent = (pair.baseToken?.symbol || '?')[0]; }
+
       document.getElementById('tokName').textContent = pair.baseToken?.name || '—';
       document.getElementById('tokTicker').textContent = '$' + (pair.baseToken?.symbol || '—');
       document.getElementById('tokDesc').textContent = `Trading on ${pair.dexId || 'pump.fun'} · Solana`;
 
       const linksDiv = document.getElementById('tokLinks');
       linksDiv.innerHTML = '';
-      if (info.socials) {
-        info.socials.forEach(s => {
-          linksDiv.innerHTML += `<a href="${s.url}" target="_blank" class="mini-btn">${s.type.toUpperCase()} ↗</a>`;
-        });
-      }
+      if (info.socials) info.socials.forEach(s => { linksDiv.innerHTML += `<a href="${s.url}" target="_blank" class="mini-btn">${s.type.toUpperCase()} ↗</a>`; });
 
-      const dex = pair.dexId || '';
-      const isGrad = dex.includes('pumpswap') || dex === 'pumpswap';
+      const isGrad = (pair.dexId || '').includes('pumpswap');
       const badge = document.getElementById('tokBadge');
-      if (isGrad) {
-        badge.textContent = '✓ GRADUATED';
-        badge.className = 'badge badge-graduated';
-        document.getElementById('iStatus').innerHTML = '<span class="ival g">Graduated → PumpSwap</span>';
-      } else {
-        badge.textContent = '⟳ BONDING CURVE';
-        badge.className = 'badge badge-bonding';
-        document.getElementById('iStatus').innerHTML = '<span class="ival y">Bonding Curve Active</span>';
-      }
+      badge.textContent = isGrad ? '✓ GRADUATED' : '⟳ BONDING CURVE';
+      badge.className = 'badge ' + (isGrad ? 'badge-graduated' : 'badge-bonding');
+      document.getElementById('iStatus').innerHTML = isGrad
+        ? '<span class="ival g">Graduated → PumpSwap</span>'
+        : '<span class="ival y">Bonding Curve Active</span>';
 
       if (pair.pairCreatedAt) {
         const d = new Date(pair.pairCreatedAt);
@@ -436,17 +453,15 @@
       const mcap = parseFloat(pair.marketCap || pair.fdv || 0);
       const vol24 = parseFloat(pair.volume?.h24 || 0);
       const liq = parseFloat(pair.liquidity?.usd || 0);
-      const change24 = parseFloat(pair.priceChange?.h24 || 0);
 
       document.getElementById('vPrice').textContent = fmtPrice(price);
-      document.getElementById('vChange').innerHTML = fmtChange(change24) + ' <span style="color:var(--muted)">(24h)</span>';
+      document.getElementById('vChange').innerHTML = fmtChange(pair.priceChange?.h24) + ' <span style="color:var(--muted)">(24h)</span>';
       document.getElementById('vMcap').textContent = fmt(mcap);
       document.getElementById('vVol').textContent = fmt(vol24);
       document.getElementById('vVolSub').textContent = fmt(parseFloat(pair.volume?.h6 || 0)) + ' (6h)';
       document.getElementById('vLiq').textContent = fmt(liq);
 
-      const target = 69000;
-      const pct = Math.min((mcap / target) * 100, 100);
+      const pct = Math.min((mcap / 69000) * 100, 100);
       document.getElementById('bcPct').textContent = pct.toFixed(1) + '%';
       setTimeout(() => { document.getElementById('bcBar').style.width = pct + '%'; }, 300);
 
@@ -462,14 +477,11 @@
       document.getElementById('iChange24h').innerHTML = fmtChange(pair.priceChange?.h24);
       document.getElementById('iDex').textContent = (pair.dexId || '—').toUpperCase();
 
-      ['s1','s2','s3','s4'].forEach((id,i) => {
-        setTimeout(() => document.getElementById(id).classList.add('on'), i * 120);
-      });
+      ['s1','s2','s3','s4'].forEach((id,i) => { setTimeout(() => document.getElementById(id).classList.add('on'), i * 120); });
 
       document.getElementById('loading').classList.remove('visible');
       document.getElementById('results').classList.add('visible');
 
-      // Load whales
       loadWhales();
 
     } catch(err) {
@@ -481,9 +493,7 @@
     document.getElementById('searchBtn').disabled = false;
   }
 
-  document.getElementById('caInput').addEventListener('keypress', e => {
-    if (e.key === 'Enter') trackToken();
-  });
+  document.getElementById('caInput').addEventListener('keypress', e => { if (e.key === 'Enter') trackToken(); });
 </script>
 </body>
 </html>
