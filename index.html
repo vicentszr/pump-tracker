@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PumpTracker — Pump.fun Token Scanner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #020608;
+      --bg2: #060d10;
+      --surface: #0a1518;
+      --border: #0f2a30;
+      --green: #00ff88;
+      --red: #ff3366;
+      --cyan: #00d4ff;
+      --yellow: #ffcc00;
+      --muted: #3a5560;
+      --text: #d0eef5;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Scanline */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,212,255,0.015) 2px,
+        rgba(0,212,255,0.015) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(2,6,8,0.9);
+      backdrop-filter: blur(10px);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--cyan);
+      letter-spacing: -0.02em;
+    }
+
+    .logo span { color: var(--green); }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Main */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    /* Search */
+    .search-section {
+      margin-bottom: 48px;
+    }
+
+    .search-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      transition: border-color 0.2s;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--cyan);
+      box-shadow: 0 0 20px rgba(0,212,255,0.1);
+    }
+
+    .search-input {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 16px 20px;
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .search-input::placeholder { color: var(--muted); }
+
+    .search-btn {
+      padding: 16px 28px;
+      background: var(--cyan);
+      color: var(--bg);
+      border: none;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.2s;
+    }
+
+    .search-btn:hover { background: #fff; }
+    .search-btn:disabled { background: var(--muted); cursor: not-allowed; }
+
+    .search-examples {
+      margin-top: 10px;
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+
+    .search-examples span {
+      color: var(--cyan);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* Loading */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 60px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .loading.visible { display: block; }
+
+    .spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error */
+    .error {
+      display: none;
+      padding: 16px 20px;
+      border: 1px solid var(--red);
+      background: rgba(255,51,102,0.05);
+      color: var(--red);
+      font-size: 0.8rem;
+      margin-bottom: 24px;
+    }
+
+    .error.visible { display: block; }
+
+    /* Results */
+    #results { display: none; }
+    #results.visible { display: block; }
+
+    /* Token header */
+    .token-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 32px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .token-img {
+      width: 64px; height: 64px;
+      border-radius: 0;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .token-info { flex: 1; }
+
+    .token-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .token-ticker {
+      font-size: 0.8rem;
+      color: var(--cyan);
+      margin-bottom: 12px;
+    }
+
+    .token-desc {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 500px;
+    }
+
+    .token-links {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .token-link {
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+
+    .token-link:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    .token-status {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .status-bonding { background: rgba(255,204,0,0.1); color: var(--yellow); border: 1px solid var(--yellow); }
+    .status-graduated { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid var(--green); }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      padding: 20px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--cyan);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s ease;
+    }
+
+    .stat-card.loaded::after { transform: scaleX(1); }
+
+    .stat-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+    .stat-value.cyan { color: var(--cyan); }
+    .stat-value.yellow { color: var(--yellow); }
+
+    .stat-sub {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Two col grid */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    /* Panel */
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-body { padding: 20px; }
+
+    /* Bonding curve progress */
+    .bc-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 0.72rem;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border);
+      margin-bottom: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      transition: width 1s ease;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: 0; top: -3px;
+      width: 12px; height: 12px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.6rem;
+      color: var(--muted);
+    }
+
+    /* CA row */
+    .ca-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .ca-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .ca-value {
+      flex: 1;
+      font-size: 0.72rem;
+      color: var(--cyan);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-btn {
+      padding: 4px 12px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .copy-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    /* Info rows */
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+    }
+
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: var(--muted); }
+    .info-val { color: var(--text); text-align: right; }
+    .info-val.green { color: var(--green); }
+    .info-val.red { color: var(--red); }
+    .info-val.cyan { color: var(--cyan); }
+
+    /* Top holders */
+    .holder-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.72rem;
+    }
+
+    .holder-row:last-child { border-bottom: none; }
+
+    .holder-rank {
+      width: 20px;
+      color: var(--muted);
+      font-size: 0.65rem;
+      text-align: center;
+    }
+
+    .holder-addr {
+      flex: 1;
+      color: var(--cyan);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .holder-pct {
+      color: var(--text);
+      text-align: right;
+      min-width: 50px;
+    }
+
+    .holder-bar-bg {
+      width: 60px;
+      height: 4px;
+      background: var(--border);
+    }
+
+    .holder-bar {
+      height: 100%;
+      background: var(--cyan);
+    }
+
+    /* Refresh btn */
+    .refresh-btn {
+      padding: 4px 12px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    /* Footer */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .token-header { flex-direction: column; }
+      .token-status { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PUMP<span>TRACKER</span></div>
+  <div class="status-dot">
+    <div class="dot"></div>
+    SOLANA MAINNET
+  </div>
+</header>
+
+<main>
+
+  <!-- Search -->
+  <div class="search-section">
+    <span class="search-label">// Enter Token Contract Address</span>
+    <div class="search-box">
+      <input
+        type="text"
+        class="search-input"
+        id="caInput"
+        placeholder="e.g. EJtmWDfjsxpadbGtqDdD1zvP6tjSa6QzY18EASS3pump"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="search-btn" id="searchBtn" onclick="trackToken()">TRACK →</button>
+    </div>
+    <div class="search-examples">
+      Try: <span onclick="loadExample('EJtmWDfjsxpadbGtqDdD1zvP6tjSa6QzY18EASS3pump')">$LB (Liquid Bank)</span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <span class="spinner"></span> FETCHING ON-CHAIN DATA...
+  </div>
+
+  <!-- Error -->
+  <div class="error" id="error"></div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <!-- CA Row -->
+    <div class="ca-row">
+      <span class="ca-label">CA</span>
+      <span class="ca-value" id="caDisplay">—</span>
+      <button class="copy-btn" onclick="copyCA()">COPY</button>
+      <a id="solscanLink" href="#" target="_blank" class="copy-btn" style="text-decoration:none">SOLSCAN ↗</a>
+      <a id="dexLink" href="#" target="_blank" class="copy-btn" style="text-decoration:none">DEXSCREENER ↗</a>
+    </div>
+
+    <!-- Token Header -->
+    <div class="token-header">
+      <img class="token-img" id="tokenImg" src="" alt="token"/>
+      <div class="token-info">
+        <div class="token-name" id="tokenName">—</div>
+        <div class="token-ticker" id="tokenTicker">—</div>
+        <div class="token-desc" id="tokenDesc">—</div>
+        <div class="token-links" id="tokenLinks"></div>
+      </div>
+      <div class="token-status">
+        <div class="status-badge" id="statusBadge">—</div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:8px;" id="createdAt">—</div>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card" id="sc1">
+        <div class="stat-label">Price (USD)</div>
+        <div class="stat-value cyan" id="statPrice">—</div>
+        <div class="stat-sub" id="statPriceChange">—</div>
+      </div>
+      <div class="stat-card" id="sc2">
+        <div class="stat-label">Market Cap</div>
+        <div class="stat-value" id="statMcap">—</div>
+        <div class="stat-sub" id="statMcapSub">FDV</div>
+      </div>
+      <div class="stat-card" id="sc3">
+        <div class="stat-label">Volume 24h</div>
+        <div class="stat-value yellow" id="statVolume">—</div>
+        <div class="stat-sub" id="statVolSub">—</div>
+      </div>
+      <div class="stat-card" id="sc4">
+        <div class="stat-label">Liquidity</div>
+        <div class="stat-value green" id="statLiquidity">—</div>
+        <div class="stat-sub" id="statLiqSub">—</div>
+      </div>
+    </div>
+
+    <!-- Two col -->
+    <div class="two-col">
+
+      <!-- Bonding Curve / Pool Info -->
+      <div class="panel">
+        <div class="panel-header">
+          <span id="curveTitle">// Bonding Curve</span>
+          <button class="refresh-btn" onclick="trackToken()">↻ REFRESH</button>
+        </div>
+        <div class="panel-body">
+          <div class="bc-info">
+            <span style="color:var(--muted);font-size:0.7rem;">Progress to graduation</span>
+            <span style="color:var(--cyan);font-size:0.7rem;" id="bcPct">—</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="bcProgress" style="width:0%"></div>
+          </div>
+          <div class="progress-labels">
+            <span>0%</span>
+            <span>~$69K → PumpSwap</span>
+          </div>
+          <div style="margin-top:16px;">
+            <div class="info-row">
+              <span class="info-key">Real SOL reserves</span>
+              <span class="info-val cyan" id="realSol">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Real token reserves</span>
+              <span class="info-val" id="realTokens">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Total supply</span>
+              <span class="info-val" id="totalSupply">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Holders</span>
+              <span class="info-val" id="holders">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Token Info -->
+      <div class="panel">
+        <div class="panel-header">// Token Info</div>
+        <div class="panel-body">
+          <div class="info-row">
+            <span class="info-key">Creator</span>
+            <span class="info-val cyan" id="creator">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Creator fees wallet</span>
+            <span class="info-val cyan" id="creatorFees">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Decimals</span>
+            <span class="info-val" id="decimals">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Mint authority</span>
+            <span class="info-val" id="mintAuth">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Freeze authority</span>
+            <span class="info-val" id="freezeAuth">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Transactions (24h)</span>
+            <span class="info-val yellow" id="txns">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Buys / Sells</span>
+            <span class="info-val" id="buysells">—</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div>PUMPTRACKER — Built on Solana</div>
+  <div>Data via DexScreener + Helius</div>
+</footer>
+
+<script>
+  let currentCA = '';
+
+  function loadExample(ca) {
+    document.getElementById('caInput').value = ca;
+    trackToken();
+  }
+
+  function shortAddr(addr) {
+    if (!addr) return '—';
+    return addr.slice(0, 6) + '...' + addr.slice(-4);
+  }
+
+  function formatNum(n) {
+    if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + (n/1e3).toFixed(2) + 'K';
+    return '$' + n.toFixed(2);
+  }
+
+  function formatPrice(p) {
+    if (!p) return '$0';
+    if (p < 0.000001) return '$' + p.toExponential(3);
+    if (p < 0.01) return '$' + p.toFixed(8);
+    return '$' + p.toFixed(4);
+  }
+
+  function copyCA() {
+    navigator.clipboard.writeText(currentCA);
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'COPIED!';
+    setTimeout(() => btn.textContent = 'COPY', 1500);
+  }
+
+  async function trackToken() {
+    const ca = document.getElementById('caInput').value.trim();
+    if (!ca) return;
+
+    currentCA = ca;
+    document.getElementById('loading').classList.add('visible');
+    document.getElementById('error').classList.remove('visible');
+    document.getElementById('results').classList.remove('visible');
+    document.getElementById('searchBtn').disabled = true;
+
+    try {
+      // Fetch from DexScreener
+      const dexRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ca}`);
+      const dexData = await dexRes.json();
+
+      // Fetch token info from Pump.fun API
+      let pumpData = null;
+      try {
+        const pumpRes = await fetch(`https://frontend-api.pump.fun/coins/${ca}`);
+        pumpData = await pumpRes.json();
+      } catch(e) {}
+
+      // Process data
+      const pair = dexData?.pairs?.[0];
+      
+      // Set CA display
+      document.getElementById('caDisplay').textContent = ca;
+      document.getElementById('solscanLink').href = `https://solscan.io/token/${ca}`;
+      document.getElementById('dexLink').href = `https://dexscreener.com/solana/${ca}`;
+
+      // Token header
+      if (pumpData) {
+        document.getElementById('tokenImg').src = pumpData.image_uri || '';
+        document.getElementById('tokenName').textContent = pumpData.name || '—';
+        document.getElementById('tokenTicker').textContent = '$' + (pumpData.symbol || '—');
+        document.getElementById('tokenDesc').textContent = pumpData.description || '';
+        
+        // Links
+        const linksDiv = document.getElementById('tokenLinks');
+        linksDiv.innerHTML = '';
+        if (pumpData.twitter) linksDiv.innerHTML += `<a href="${pumpData.twitter}" target="_blank" class="token-link">TWITTER ↗</a>`;
+        if (pumpData.telegram) linksDiv.innerHTML += `<a href="${pumpData.telegram}" target="_blank" class="token-link">TELEGRAM ↗</a>`;
+        if (pumpData.website) linksDiv.innerHTML += `<a href="${pumpData.website}" target="_blank" class="token-link">WEBSITE ↗</a>`;
+        linksDiv.innerHTML += `<a href="https://pump.fun/coin/${ca}" target="_blank" class="token-link">PUMP.FUN ↗</a>`;
+
+        // Status
+        const isComplete = pumpData.complete || false;
+        const badge = document.getElementById('statusBadge');
+        if (isComplete) {
+          badge.textContent = '✓ GRADUATED';
+          badge.className = 'status-badge status-graduated';
+        } else {
+          badge.textContent = '⟳ BONDING CURVE';
+          badge.className = 'status-badge status-bonding';
+        }
+
+        // Created
+        if (pumpData.created_timestamp) {
+          const d = new Date(pumpData.created_timestamp);
+          document.getElementById('createdAt').textContent = 'Created ' + d.toLocaleDateString();
+        }
+
+        // Creator
+        document.getElementById('creator').textContent = shortAddr(pumpData.creator);
+        document.getElementById('creatorFees').textContent = shortAddr(pumpData.creator);
+        document.getElementById('decimals').textContent = '6';
+        document.getElementById('mintAuth').textContent = pumpData.mint_revoked ? '✓ REVOKED' : 'Active';
+        document.getElementById('mintAuth').className = 'info-val ' + (pumpData.mint_revoked ? 'green' : 'red');
+        document.getElementById('freezeAuth').textContent = '—';
+
+        // Bonding curve
+        const mcap = pumpData.usd_market_cap || 0;
+        const target = 69000;
+        const pct = Math.min((mcap / target) * 100, 100);
+        document.getElementById('bcPct').textContent = pct.toFixed(1) + '%';
+        setTimeout(() => {
+          document.getElementById('bcProgress').style.width = pct + '%';
+        }, 300);
+
+        document.getElementById('realSol').textContent = ((pumpData.real_sol_reserves || 0) / 1e9).toFixed(4) + ' SOL';
+        document.getElementById('realTokens').textContent = formatNum((pumpData.real_token_reserves || 0) / 1e6);
+        document.getElementById('totalSupply').textContent = '1,000,000,000';
+        document.getElementById('holders').textContent = (pumpData.holder_count || '—').toLocaleString();
+      }
+
+      // Stats from DexScreener
+      if (pair) {
+        const price = parseFloat(pair.priceUsd || 0);
+        const mcap = parseFloat(pair.marketCap || pair.fdv || 0);
+        const vol24 = parseFloat(pair.volume?.h24 || 0);
+        const liq = parseFloat(pair.liquidity?.usd || 0);
+        const change24 = parseFloat(pair.priceChange?.h24 || 0);
+
+        document.getElementById('statPrice').textContent = formatPrice(price);
+        document.getElementById('statPriceChange').textContent = (change24 >= 0 ? '+' : '') + change24.toFixed(2) + '% (24h)';
+        document.getElementById('statPriceChange').style.color = change24 >= 0 ? 'var(--green)' : 'var(--red)';
+
+        document.getElementById('statMcap').textContent = formatNum(mcap);
+        document.getElementById('statVolume').textContent = formatNum(vol24);
+        document.getElementById('statLiquidity').textContent = formatNum(liq);
+
+        const txns = (pair.txns?.h24?.buys || 0) + (pair.txns?.h24?.sells || 0);
+        document.getElementById('txns').textContent = txns.toLocaleString();
+        document.getElementById('buysells').innerHTML = 
+          `<span style="color:var(--green)">${pair.txns?.h24?.buys || 0} buys</span> / <span style="color:var(--red)">${pair.txns?.h24?.sells || 0} sells</span>`;
+      } else if (pumpData) {
+        // Use pump.fun data as fallback
+        const mcap = pumpData.usd_market_cap || 0;
+        document.getElementById('statMcap').textContent = formatNum(mcap);
+        document.getElementById('statPrice').textContent = formatPrice(mcap / 1e9);
+      }
+
+      // Animate stat cards
+      ['sc1','sc2','sc3','sc4'].forEach((id, i) => {
+        setTimeout(() => document.getElementById(id).classList.add('loaded'), i * 150);
+      });
+
+      document.getElementById('loading').classList.remove('visible');
+      document.getElementById('results').classList.add('visible');
+
+    } catch(err) {
+      document.getElementById('loading').classList.remove('visible');
+      document.getElementById('error').textContent = '❌ Error: ' + err.message + '. Check the contract address and try again.';
+      document.getElementById('error').classList.add('visible');
+    }
+
+    document.getElementById('searchBtn').disabled = false;
+  }
+
+  // Enter key
+  document.getElementById('caInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') trackToken();
+  });
+</script>
+</body>
+</html>
