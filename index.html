@@ -287,12 +287,14 @@
 
     try {
       // Map interval to GeckoTerminal aggregate
-      const aggMap = { '5m': 5, '15m': 15, '1h': 60, '4h': 240, '1d': 1440 };
+      const aggMap = { '5m': 1, '15m': 5, '1h': 15, '4h': 60, '1d': 240 };
+      const limitMap = { '5m': 200, '15m': 200, '1h': 200, '4h': 200, '1d': 200 };
       const agg = aggMap[interval] || 5;
-      const limit = interval === '1d' ? 90 : 200;
+      const limit = 200;
 
       const network = 'solana';
       const poolAddr = currentPair?.pairAddress || currentCA;
+      console.log('Using pool:', poolAddr);
       const url = `https://api.geckoterminal.com/api/v2/networks/${network}/pools/${poolAddr}/ohlcv/minute?aggregate=${agg}&limit=${limit}&currency=usd`;
 
       const res = await fetch(url, { headers: { 'Accept': 'application/json;version=20230302' } });
